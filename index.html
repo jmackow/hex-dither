@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hexagon Dithering</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-left">
+            <span class="app-name">Hexagon Dithering</span>
+        </div>
+        <div class="header-right">
+            <div class="download-format" id="downloadFormatWrapper">
+                <label for="downloadFormat">Format</label>
+                <select id="downloadFormat">
+                    <option value="png" selected>PNG</option>
+                    <option value="svg">SVG</option>
+                </select>
+            </div>
+            <button type="button" class="btn-link" id="playPauseBtn" disabled style="display: none;">Pause</button>
+            <button type="button" class="btn-link" id="downloadBtn" disabled>Download Image</button>
+            <button type="button" class="btn-link" id="downloadAnimatedBtn" disabled style="display: none;">Download Animated</button>
+            <button type="button" class="btn-link" id="downloadEmbedBtn" disabled style="display: none;">Export Embed</button>
+        </div>
+    </header>
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="controls">
+                <h2 class="section-title">INPUT SOURCE</h2>
+                <div class="file-inputs">
+                    <div class="file-input-group">
+                        <label for="imageInput">Image</label>
+                        <input type="file" id="imageInput" accept="image/*" class="file-input">
+                    </div>
+                    <div class="file-input-group">
+                        <label for="videoInput">Video</label>
+                        <input type="file" id="videoInput" accept="video/*" class="file-input">
+                    </div>
+                </div>
+                <h2 class="section-title">HEXAGON PARAMETERS</h2>
+                <div class="slider-group">
+                    <label for="hexSize">Max Size</label>
+                    <input type="range" id="hexSize" min="1" max="50" value="20">
+                    <span id="hexSizeValue" class="slider-value">20</span>
+                </div>
+                <div class="slider-group">
+                    <label for="minHexSize">Min Size</label>
+                    <input type="range" id="minHexSize" min="1" max="10" value="2">
+                    <span id="minHexSizeValue" class="slider-value">2</span>
+                </div>
+                <h2 class="section-title">INTERACTIVE</h2>
+                <div class="slider-group">
+                    <label for="jitterSpeed">Jitter Speed</label>
+                    <input type="range" id="jitterSpeed" min="0" max="3" step="0.1" value="1.0">
+                    <span id="jitterSpeedValue" class="slider-value">1.0</span>
+                </div>
+                <div class="toggle-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="interactiveMode" class="toggle-input">
+                        Interactive Hover
+                    </label>
+                </div>
+                <div class="slider-group">
+                    <label for="interactiveRadius">Radius</label>
+                    <input type="range" id="interactiveRadius" min="20" max="600" value="250">
+                    <span id="interactiveRadiusValue" class="slider-value">250</span>
+                </div>
+                <h2 class="section-title">WAVE ANIMATION</h2>
+                <div class="toggle-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="waveAnimation" class="toggle-input">
+                        Wave Animation
+                    </label>
+                </div>
+                <div class="wave-controls" id="waveControls" style="display: none;">
+                    <div class="slider-group">
+                        <label for="waveSpeed">Speed</label>
+                        <input type="range" id="waveSpeed" min="0" max="10" step="0.1" value="2.0">
+                        <span id="waveSpeedValue" class="slider-value">2.0</span>
+                    </div>
+                    <div class="slider-group">
+                        <label for="waveSize">Size</label>
+                        <input type="range" id="waveSize" min="0" max="1" step="0.05" value="0.5">
+                        <span id="waveSizeValue" class="slider-value">0.5</span>
+                    </div>
+                    <div class="slider-group">
+                        <label for="waveDirection">Direction</label>
+                        <input type="range" id="waveDirection" min="0" max="345" step="15" value="90">
+                        <span id="waveDirectionValue" class="slider-value">90°</span>
+                    </div>
+                    <div class="select-group">
+                        <label for="waveShape">Shape</label>
+                        <select id="waveShape">
+                            <option value="curved" selected>Curved</option>
+                            <option value="flat">Flat</option>
+                        </select>
+                    </div>
+                </div>
+                <h2 class="section-title">COLORS</h2>
+                <div class="color-controls">
+                    <div class="color-picker-group">
+                        <label for="fgColor">Hexagon</label>
+                        <input type="color" id="fgColor" value="#000000">
+                    </div>
+                    <div class="color-picker-group">
+                        <label for="bgColor">Background</label>
+                        <input type="color" id="bgColor" value="#FFFFFF">
+                    </div>
+                </div>
+                <div class="swatch-controls">
+                    <div class="swatch-group">
+                        <span class="swatch-label">Hexagon swatches</span>
+                        <div class="swatch-row">
+                            <button class="color-swatch" data-role="fg-swatch" data-color="#66B5FF" style="background-color:#66B5FF;"></button>
+                            <button class="color-swatch" data-role="fg-swatch" data-color="#2495FF" style="background-color:#2495FF;"></button>
+                            <button class="color-swatch" data-role="fg-swatch" data-color="#061540" style="background-color:#061540;"></button>
+                            <button class="color-swatch" data-role="fg-swatch" data-color="#FAF5F1" style="background-color:#FAF5F1;"></button>
+                            <button class="color-swatch" data-role="fg-swatch" data-color="#FFFFFF" style="background-color:#FFFFFF; border:1px solid #ccc;"></button>
+                            <button class="color-swatch" data-role="fg-swatch" data-color="#C0F09E" style="background-color:#C0F09E;"></button>
+                            <button class="color-swatch" data-role="fg-swatch" data-color="#90DC5B" style="background-color:#90DC5B;"></button>
+                            <button class="color-swatch" data-role="fg-swatch" data-color="#BC97FF" style="background-color:#BC97FF;"></button>
+                            <button class="color-swatch" data-role="fg-swatch" data-color="#9A73E0" style="background-color:#9A73E0;"></button>
+                        </div>
+                    </div>
+                    <div class="swatch-group">
+                        <span class="swatch-label">Background swatches</span>
+                        <div class="swatch-row">
+                            <button class="color-swatch" data-role="bg-swatch" data-color="#66B5FF" style="background-color:#66B5FF;"></button>
+                            <button class="color-swatch" data-role="bg-swatch" data-color="#2495FF" style="background-color:#2495FF;"></button>
+                            <button class="color-swatch" data-role="bg-swatch" data-color="#061540" style="background-color:#061540;"></button>
+                            <button class="color-swatch" data-role="bg-swatch" data-color="#FAF5F1" style="background-color:#FAF5F1;"></button>
+                            <button class="color-swatch" data-role="bg-swatch" data-color="#FFFFFF" style="background-color:#FFFFFF; border:1px solid #ccc;"></button>
+                            <button class="color-swatch" data-role="bg-swatch" data-color="#C0F09E" style="background-color:#C0F09E;"></button>
+                            <button class="color-swatch" data-role="bg-swatch" data-color="#90DC5B" style="background-color:#90DC5B;"></button>
+                            <button class="color-swatch" data-role="bg-swatch" data-color="#BC97FF" style="background-color:#BC97FF;"></button>
+                            <button class="color-swatch" data-role="bg-swatch" data-color="#9A73E0" style="background-color:#9A73E0;"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        <main class="canvas-area">
+            <div class="canvas-container">
+                <div class="reference-image-wrapper">
+                    <canvas id="inputCanvas"></canvas>
+                </div>
+                <div class="output-image-wrapper">
+                    <canvas id="outputCanvas"></canvas>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+

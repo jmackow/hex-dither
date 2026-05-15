@@ -12,6 +12,11 @@
     --track: #CCCCCC;
     --border: #E5E5E5;
     --sidebar-bg: #FAF5F1;
+    /* DialKit-style slider colors */
+    --slider-fill: #66b5ff;
+    --slider-track-bg: rgba(36, 149, 255, 0.15);
+    --slider-thumb: rgba(255, 255, 255, 0.95);
+    --slider-tick: rgba(0, 0, 0, 0.08);
 }
 
 body {
@@ -51,10 +56,21 @@ body {
     flex-wrap: wrap;
 }
 
-.header-right .download-format {
+.header-right .download-format,
+.header-right .embed-ratio-wrap,
+.header-right .embed-id-wrap {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.header-right .embed-id-wrap input {
+    padding: 5px 8px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    width: 90px;
 }
 
 .header-right .download-format label {
@@ -94,6 +110,12 @@ body {
     color: var(--track);
     cursor: not-allowed;
     text-decoration: none;
+}
+
+.embed-size-hint {
+    font-size: 11px;
+    color: var(--text-light);
+    white-space: nowrap;
 }
 
 /* Main two-column layout */
@@ -165,23 +187,94 @@ body {
     border-color: var(--accent);
 }
 
-/* Slider rows: label left, slider center, value right */
+/* DialKit-style slider: full-bleed fill behind label/value, ticks on hover */
 .slider-group {
+    --fill-pct: 0%;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 0;
+    min-height: 40px;
+    padding: 8px 0;
+    border-radius: 10px;
+    background: var(--slider-track-bg);
+    position: relative;
+    overflow: visible;
+}
+
+/* Ticks: full pill, visible only on hover, behind the fill */
+.slider-group .slider-ticks {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        to right,
+        var(--slider-tick) 0,
+        var(--slider-tick) 1px,
+        transparent 1px,
+        transparent 8px
+    );
+    border-radius: 10px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 0;
+}
+
+.slider-group:hover .slider-ticks {
+    opacity: 1;
+}
+
+/* Fill: full height, from left edge to value, behind label and value */
+.slider-group .slider-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--fill-px, var(--fill-pct));
+    background: var(--slider-fill);
+    border-radius: 10px 0 0 10px;
+    pointer-events: none;
+    z-index: 1;
 }
 
 .slider-group label {
-    min-width: 90px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    min-width: 88px;
+    padding: 0 12px 0 12px;
     font-size: 13px;
-    font-weight: 400;
+    font-weight: 500;
+    line-height: 1;
     color: var(--text);
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+}
+
+.slider-group .slider-track-wrap {
+    flex: 1;
+    position: relative;
+    height: 24px;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+    z-index: 2;
 }
 
 .slider-group input[type="range"] {
+    position: relative;
+    z-index: 2;
     flex: 1;
-    height: 2px;
+    width: 100%;
+    height: 24px;
+    margin: 0;
+    padding: 0;
     background: transparent;
     outline: none;
     -webkit-appearance: none;
@@ -189,40 +282,57 @@ body {
 }
 
 .slider-group input[type="range"]::-webkit-slider-runnable-track {
-    height: 2px;
-    background: var(--track);
+    height: 24px;
+    background: transparent;
 }
 
 .slider-group input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 8px;
-    height: 8px;
-    background: var(--accent);
+    width: 3px;
+    height: 18px;
+    background: var(--slider-thumb);
+    border-radius: 1px;
     cursor: pointer;
-    margin-top: -3px;
+    /* Center 18px thumb in 24px track: (24 - 18) / 2 = 3px */
+    margin-top: 3px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
 }
 
 .slider-group input[type="range"]::-moz-range-track {
-    height: 2px;
-    background: var(--track);
+    height: 24px;
+    background: transparent;
 }
 
 .slider-group input[type="range"]::-moz-range-thumb {
-    width: 8px;
-    height: 8px;
-    background: var(--accent);
+    width: 3px;
+    height: 18px;
+    background: var(--slider-thumb);
     border: none;
-    border-radius: 0;
+    border-radius: 1px;
     cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
 }
 
 .slider-value {
-    min-width: 36px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    min-width: 52px;
+    padding: 0 12px 0 12px;
     text-align: right;
     font-size: 13px;
-    font-weight: 400;
-    color: var(--text-light);
+    font-weight: 500;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, "SF Mono", Menlo, Monaco, monospace;
+    color: var(--text);
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    pointer-events: none;
 }
 
 /* Toggles */

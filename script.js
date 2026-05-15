@@ -28,6 +28,11 @@ const downloadEmbedBtn = document.getElementById('downloadEmbedBtn');
 const playPauseBtn = document.getElementById('playPauseBtn');
 const downloadFormat = document.getElementById('downloadFormat');
 const downloadFormatWrapper = document.getElementById('downloadFormatWrapper');
+const embedAspectRatioSelect = document.getElementById('embedAspectRatio');
+const embedRatioWrap = document.getElementById('embedRatioWrap');
+const embedSizeHint = document.getElementById('embedSizeHint');
+const embedIdInput = document.getElementById('embedId');
+const embedIdWrap = document.getElementById('embedIdWrap');
 
 let inputImage = null;
 let inputVideo = null;
@@ -60,6 +65,41 @@ videoElement.style.display = 'none';
 videoElement.muted = true;
 videoElement.playsInline = true;
 document.body.appendChild(videoElement);
+
+// DialKit-style slider: full-bleed fill aligned to thumb position
+function updateSliderFill(input) {
+    const group = input.closest('.slider-group');
+    if (!group) return;
+
+    const min = parseFloat(input.min) || 0;
+    const max = parseFloat(input.max) || 100;
+    const val = parseFloat(input.value);
+    const ratio = max > min ? (val - min) / (max - min) : 0;
+
+    // Percent fallback (if layout isn't measurable yet)
+    const pct = Math.max(0, Math.min(ratio, 1)) * 100;
+    group.style.setProperty('--fill-pct', pct + '%');
+
+    // Pixel-perfect alignment: fill ends at the thumb x-position within the pill.
+    const groupRect = group.getBoundingClientRect();
+    const inputRect = input.getBoundingClientRect();
+    if (!groupRect.width || !inputRect.width) return;
+
+    const thumbX = inputRect.left + inputRect.width * Math.max(0, Math.min(ratio, 1));
+    const fillPx = Math.max(0, Math.min(groupRect.width, thumbX - groupRect.left));
+    group.style.setProperty('--fill-px', fillPx + 'px');
+}
+
+document.querySelectorAll('.slider-group input[type="range"]').forEach(updateSliderFill);
+document.addEventListener('input', (e) => {
+    if (e.target.type === 'range' && e.target.closest('.slider-group')) updateSliderFill(e.target);
+});
+document.addEventListener('change', (e) => {
+    if (e.target.type === 'range' && e.target.closest('.slider-group')) updateSliderFill(e.target);
+});
+window.addEventListener('resize', () => {
+    document.querySelectorAll('.slider-group input[type="range"]').forEach(updateSliderFill);
+});
 
 // Initialize
 hexSizeSlider.addEventListener('input', (e) => {
@@ -108,6 +148,16 @@ if (waveAnimationToggle) {
         if (downloadEmbedBtn) {
             downloadEmbedBtn.style.display = (inputImage && !inputVideo) ? 'inline-block' : 'none';
             downloadEmbedBtn.disabled = !(inputImage && !inputVideo);
+        }
+        if (embedRatioWrap) {
+            embedRatioWrap.style.display = (inputImage && !inputVideo) ? 'inline-flex' : 'none';
+        }
+        if (embedIdWrap) {
+            embedIdWrap.style.display = (inputImage && !inputVideo) ? 'inline-flex' : 'none';
+        }
+        if (embedSizeHint) {
+            embedSizeHint.style.display = (inputImage && !inputVideo) ? 'inline' : 'none';
+            if (inputImage && !inputVideo) updateEmbedSizeHint();
         }
         if (e.target.checked) {
             startWaveAnimation();
@@ -288,6 +338,9 @@ imageInput.addEventListener('change', (e) => {
             downloadEmbedBtn.style.display = 'none';
             downloadEmbedBtn.disabled = true;
         }
+        if (embedRatioWrap) embedRatioWrap.style.display = 'none';
+        if (embedIdWrap) embedIdWrap.style.display = 'none';
+        if (embedSizeHint) embedSizeHint.style.display = 'none';
         
         // Clean up video URL if exists
         if (videoElement.src) {
@@ -316,6 +369,12 @@ imageInput.addEventListener('change', (e) => {
                     downloadEmbedBtn.disabled = false;
                     downloadEmbedBtn.style.display = 'inline-block';
                 }
+                if (embedRatioWrap) embedRatioWrap.style.display = 'inline-flex';
+                if (embedIdWrap) embedIdWrap.style.display = 'inline-flex';
+                if (embedSizeHint) {
+                    embedSizeHint.style.display = 'inline';
+                    updateEmbedSizeHint();
+                }
             };
             img.src = event.target.result;
         };
@@ -333,6 +392,9 @@ videoInput.addEventListener('change', (e) => {
             downloadEmbedBtn.style.display = 'none';
             downloadEmbedBtn.disabled = true;
         }
+        if (embedRatioWrap) embedRatioWrap.style.display = 'none';
+        if (embedIdWrap) embedIdWrap.style.display = 'none';
+        if (embedSizeHint) embedSizeHint.style.display = 'none';
         
         // Clean up previous video URL if exists
         if (videoElement.src) {
@@ -360,6 +422,9 @@ videoInput.addEventListener('change', (e) => {
                 downloadEmbedBtn.style.display = 'none';
                 downloadEmbedBtn.disabled = true;
             }
+            if (embedRatioWrap) embedRatioWrap.style.display = 'none';
+            if (embedIdWrap) embedIdWrap.style.display = 'none';
+            if (embedSizeHint) embedSizeHint.style.display = 'none';
         };
         
         videoElement.onended = () => {
@@ -749,6 +814,21 @@ function exportAsSVG() {
     URL.revokeObjectURL(url);
 }
 
+function updateEmbedSizeHint() {
+    if (!embedSizeHint || !lastHexagons.length || lastHexagonCanvasSize.width === 0) {
+        if (embedSizeHint) embedSizeHint.textContent = '';
+        return;
+    }
+    const totalHexes = lastHexagons.length;
+    const maxEmbedHexes = 5000;
+    const step = totalHexes > maxEmbedHexes ? Math.ceil(totalHexes / maxEmbedHexes) : 1;
+    const exportedHexCount = Math.ceil(totalHexes / step);
+    // Estimate: ~12 chars per hex (x,y,b with 1 decimal each + commas) + ~2200 chars fixed script overhead
+    const estimatedSize = exportedHexCount * 12 + 2200;
+    const sizeK = (estimatedSize / 1000).toFixed(1);
+    embedSizeHint.textContent = `~${sizeK}k chars`;
+}
+
 function exportEmbeddableAnimatedHTML() {
     if (!lastHexagons.length || lastHexagonCanvasSize.width === 0) {
         processImage();
@@ -760,128 +840,158 @@ function exportEmbeddableAnimatedHTML() {
     const fgColor = fgColorInput ? fgColorInput.value : '#000000';
     const minHexSize = parseInt(minHexSizeSlider.value);
     const maxHexSize = parseInt(hexSizeSlider.value);
-    const cropInset = 12; // px crop on all sides (in SVG user units)
-    const croppedWidth = Math.max(1, width - cropInset * 2);
-    const croppedHeight = Math.max(1, height - cropInset * 2);
+    const cropInset = 12; // visual padding around the content (unused for canvas)
+    const croppedWidth = width;
+    const croppedHeight = height;
 
-    // Bake current wave settings into the export (autoplay_fixed)
+    // Embed wrapper aspect ratio (picker: Image or preset)
+    const embedRatioRaw = embedAspectRatioSelect ? embedAspectRatioSelect.value : 'image';
+    const aspectRatioCSS = embedRatioRaw === 'image'
+        ? `${Math.round(croppedWidth)}/${Math.round(croppedHeight)}`
+        : embedRatioRaw === '16:9' ? '16/9' : embedRatioRaw === '4:3' ? '4/3' : embedRatioRaw === '1:1' ? '1' : embedRatioRaw === '3:4' ? '3/4' : embedRatioRaw === '9:16' ? '9/16' : `${Math.round(croppedWidth)}/${Math.round(croppedHeight)}`;
+
+    // Bake current wave / interactive settings into the export
     const waveSpeed = waveSpeedSlider ? parseFloat(waveSpeedSlider.value) : 2.0;
     const waveStrength = waveSizeSlider ? parseFloat(waveSizeSlider.value) : 0.5;
     const waveDirectionDeg = waveDirectionSlider ? parseInt(waveDirectionSlider.value) : 90;
     const waveShape = waveShapeSelect ? waveShapeSelect.value : 'curved';
+    const hasWave = !!(waveAnimationToggle && waveAnimationToggle.checked);
+    const hasInteractive = !!(interactiveModeToggle && interactiveModeToggle.checked);
+    const interactiveRadius = interactiveRadiusSlider ? parseFloat(interactiveRadiusSlider.value) : 0;
+    const jitterSpeed = jitterSpeedSlider ? parseFloat(jitterSpeedSlider.value) : 1.0;
 
-    // Build SVG polygons. Store per-hex attributes to replay animation in the embed.
-    const svgPolys = [];
-    for (let i = 0; i < lastHexagons.length; i++) {
+    // Build compact hex data array [x0,y0,base0,x1,y1,base1,...].
+    // Quantize to 1 decimal and cap hex count so embed stays ~50k–80k chars.
+    const hexDataParts = [];
+    const totalHexes = lastHexagons.length;
+    const maxEmbedHexes = 5000;
+    const step = totalHexes > maxEmbedHexes ? Math.ceil(totalHexes / maxEmbedHexes) : 1;
+
+    for (let i = 0; i < totalHexes; i += step) {
         const hex = lastHexagons[i];
         const baseSize = hex.baseSize ?? hex.size;
-        const fill = hex.color || fgColor;
-
-        // Initial points at baseSize (time=0)
-        const pts = [];
-        for (let k = 0; k < 6; k++) {
-            const angle = (Math.PI / 3) * k - Math.PI / 6;
-            const px = hex.x + baseSize * Math.cos(angle);
-            const py = hex.y + baseSize * Math.sin(angle);
-            pts.push(`${px.toFixed(2)},${py.toFixed(2)}`);
-        }
-
-        svgPolys.push(
-            `<polygon id="h${i}" data-x="${hex.x}" data-y="${hex.y}" data-base="${baseSize}" fill="${fill}" points="${pts.join(' ')}"/>`
-        );
+        const x = Math.round(hex.x * 10) / 10;
+        const y = Math.round(hex.y * 10) / 10;
+        const b = Math.round(baseSize * 10) / 10;
+        hexDataParts.push(x, y, b);
     }
 
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hexagon Dither (Embed)</title>
-  <style>
-    html, body { height: 100%; width: 100%; margin: 0; }
-    body { background: ${bgColor}; overflow: hidden; }
-    svg { display: block; width: 100%; height: 100%; }
-  </style>
-</head>
-<body>
-  <svg xmlns="http://www.w3.org/2000/svg"
-       viewBox="${cropInset} ${cropInset} ${croppedWidth} ${croppedHeight}"
-       preserveAspectRatio="xMidYMid slice"
-       width="${width}" height="${height}"
-       aria-label="Hexagon dither animation">
-    <rect x="${cropInset}" y="${cropInset}" width="${croppedWidth}" height="${croppedHeight}" fill="${bgColor}"></rect>
-    ${svgPolys.join('\n    ')}
-  </svg>
-  <script>
-    (function () {
-      const WAVE_SPEED = ${JSON.stringify(waveSpeed)};
-      const WAVE_STRENGTH = ${JSON.stringify(waveStrength)};
-      const WAVE_DIR_DEG = ${JSON.stringify(waveDirectionDeg)};
-      const WAVE_SHAPE = ${JSON.stringify(waveShape)};
-      const MIN_HEX = ${JSON.stringify(minHexSize)};
-      const MAX_HEX = ${JSON.stringify(maxHexSize)};
+    const hexDataLiteral = hexDataParts.join(',');
 
-      const dirRad = (WAVE_DIR_DEG * Math.PI) / 180;
-      const axisX = Math.cos(dirRad);
-      const axisY = Math.sin(dirRad);
-      const waveFrequency = 0.02;
-      const baseAngles = [0,1,2,3,4,5].map(i => (Math.PI / 3) * i - Math.PI / 6);
-      const cosA = baseAngles.map(a => Math.cos(a));
-      const sinA = baseAngles.map(a => Math.sin(a));
+    // Custom embed ID for multiple embeds on same page
+    const embedId = embedIdInput ? embedIdInput.value.trim() || 'hexCanvas' : 'hexCanvas';
 
-      const polys = [];
-      const polyNodes = document.querySelectorAll('polygon[id^=\"h\"]');
-      for (let i = 0; i < polyNodes.length; i++) {
-        const el = polyNodes[i];
-        polys.push({
-          el,
-          x: parseFloat(el.dataset.x),
-          y: parseFloat(el.dataset.y),
-          base: parseFloat(el.dataset.base),
-        });
-      }
-
-      const start = performance.now();
-
-      function waveOffsetFromPhase(phase) {
-        if (WAVE_SHAPE === 'flat') {
-          const normalized = ((phase % (2 * Math.PI)) + (2 * Math.PI)) / (2 * Math.PI);
-          return normalized < 0.5 ? (4 * normalized - 1) : (3 - 4 * normalized);
+    // Canvas-based, self-contained snippet suitable for Webflow embeds.
+    const html = `<div class="hex-dither-embed"><canvas id="${embedId}"></canvas><style>
+  .hex-dither-embed{width:100%;height:100%;aspect-ratio:${aspectRatioCSS};overflow:hidden;position:relative;background:${bgColor}}
+  .hex-dither-embed canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:block}
+</style><script>(function(){
+  const W=${Math.round(croppedWidth)},H=${Math.round(croppedHeight)},BG='${bgColor}',FG='${fgColor}';
+  const MIN=${minHexSize},MAX=${maxHexSize};
+  const INTER=${hasInteractive ? 'true' : 'false'},RAD=${interactiveRadius.toFixed(1)},JSPD=${jitterSpeed.toFixed(2)};
+  const HAS_WAVE=${hasWave ? 'true' : 'false'},WS=${waveSpeed.toFixed(2)},WST=${waveStrength.toFixed(2)},WD=${waveDirectionDeg},WSH='${waveShape}';
+  const D=[${hexDataLiteral}];
+  const cvs=document.getElementById('${embedId}');
+  const ctx=cvs.getContext('2d');
+  cvs.width=W;cvs.height=H;
+  function layout(){
+    var p=cvs.parentNode;
+    if(!p)return;
+    var r=p.getBoundingClientRect();
+    if(!r.width||!r.height)return;
+    var s=Math.max(r.width/W,r.height/H);
+    cvs.style.width=(W*s)+'px';
+    cvs.style.height=(H*s)+'px';
+  }
+  layout();
+  window.addEventListener('resize',layout);
+  const ang=[0,1,2,3,4,5].map(function(i){return Math.PI/3*i-Math.PI/6});
+  const cosA=ang.map(Math.cos),sinA=ang.map(Math.sin);
+  const hexes=[];for(let i=0,j=0;i<D.length/3;i++,j+=3){var x=D[j],y=D[j+1],b=D[j+2];
+    var s=Math.sin(i*12.9898+78.233)*43758.5453; var r=s-Math.floor(s);
+    var s2=Math.sin((i+9999)*12.9898+3.1415)*43758.5453; var r2=s2-Math.floor(s2);
+    hexes.push({x:x,y:y,b:b,px:r*6.28318,py:r2*6.28318});
+  }
+  const n=hexes.length;
+  const dirRad=WD*Math.PI/180;
+  const ax=Math.cos(dirRad),ay=Math.sin(dirRad);
+  const waveFreq=0.02;
+  function waveOffset(ph){
+    if(WSH==='flat'){var norm=((ph%(2*Math.PI))+(2*Math.PI))/(2*Math.PI);return norm<0.5?4*norm-1:3-4*norm;}
+    return Math.sin(ph);
+  }
+  function clamp(v,lo,hi){return v<lo?lo:v>hi?hi:v;}
+  var mx=0,my=0,hover=false;
+  if(INTER){
+    cvs.addEventListener('mousemove',function(e){
+      var r=cvs.getBoundingClientRect();
+      mx=(e.clientX-r.left)*W/r.width;
+      my=(e.clientY-r.top)*H/r.height;
+      hover=true;
+    });
+    cvs.addEventListener('mouseleave',function(){hover=false;});
+  }
+  function draw(t){
+    ctx.fillStyle=BG;
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=FG;
+    const jitterAmp=MAX*0.2;
+    const jFreq=1*JSPD;
+    for(let i=0;i<n;i++){
+      const h=hexes[i];
+      let sz=h.b;
+      if(HAS_WAVE){
+        var ph;
+        if(WSH==='concentric-out'||WSH==='concentric-in'){
+          const cx=W/2,cy=H/2;
+          const dx=h.x-cx,dy=h.y-cy;
+          const r=Math.sqrt(dx*dx+dy*dy);
+          const sign=WSH==='concentric-in'?-1:1;
+          ph=sign*r*waveFreq+t*WS;
+        }else{
+          ph=(h.x*ax+h.y*ay)*waveFreq+t*WS;
         }
-        return Math.sin(phase);
+        const off=waveOffset(ph);
+        sz=clamp(h.b*(1+off*WST),MIN,MAX);
       }
-
-      function clamp(v, lo, hi) {
-        return Math.max(lo, Math.min(hi, v));
-      }
-
-      function tick(now) {
-        const t = (now - start) / 1000;
-        for (let i = 0; i < polys.length; i++) {
-          const p = polys[i];
-          const dist = p.x * axisX + p.y * axisY;
-          const phase = dist * waveFrequency + t * WAVE_SPEED;
-          const off = waveOffsetFromPhase(phase);
-          const size = clamp(p.base * (1 + off * WAVE_STRENGTH), MIN_HEX, MAX_HEX);
-
-          // Update polygon points (pure vector deformation)
-          // Build a short string without allocations from arrays each time.
-          let s = '';
-          for (let k = 0; k < 6; k++) {
-            const px = p.x + size * cosA[k];
-            const py = p.y + size * sinA[k];
-            s += px.toFixed(2) + ',' + py.toFixed(2) + (k === 5 ? '' : ' ');
-          }
-          p.el.setAttribute('points', s);
+      let x=h.x,y=h.y,inf=0;
+      if(INTER&&hover&&RAD>0){
+        const dx=x-mx,dy=y-my;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d>0&&d<RAD){
+          const tt=d/RAD,omt=1-tt;
+          const dispF=omt*omt*omt;
+          inf=dispF;
+          const maxDisp=Math.min(MAX*2,RAD*0.15);
+          const disp=dispF*maxDisp;
+          const ux=dx/d,uy=dy/d;
+          x+=ux*disp;y+=uy*disp;
         }
-        requestAnimationFrame(tick);
       }
-
-      requestAnimationFrame(tick);
-    })();
-  </script>
-</body>
-</html>`;
+      if(INTER&&inf>0){
+        const jx=jitterAmp*Math.sin(jFreq*t+h.px)*inf;
+        const jy=jitterAmp*0.6*Math.sin(jFreq*t+h.py)*inf;
+        x+=jx;y+=jy;
+      }
+      ctx.beginPath();
+      for(let k=0;k<6;k++){
+        const px=x+sz*cosA[k];
+        const py=y+sz*sinA[k];
+        if(k===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+  if(!HAS_WAVE&&!INTER){draw(0);return;}
+  const start=performance.now();
+  function loop(now){
+    const t=(now-start)/1000;
+    draw(t);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();<\/script></div>`;
 
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -970,27 +1080,37 @@ function processImage(time = 0) {
                 // Convert direction to radians (0° = right, 90° = down, 180° = left, 270° = up)
                 const waveDirectionRad = (waveDirectionDeg * Math.PI) / 180;
                 
-                // Project hex position onto wave direction axis
-                // For a wave traveling perpendicular to the direction vector
-                const waveAxisX = Math.cos(waveDirectionRad);
-                const waveAxisY = Math.sin(waveDirectionRad);
-                const distanceAlongWave = x * waveAxisX + y * waveAxisY;
-                
                 // Wave parameters
                 const waveFrequency = 0.02; // spatial frequency
-                const wavePhase = distanceAlongWave * waveFrequency + time * waveSpeed;
+                let wavePhase;
+                if (waveShape === 'concentric-out' || waveShape === 'concentric-in') {
+                    const centerX = width / 2;
+                    const centerY = height / 2;
+                    const dx = x - centerX;
+                    const dy = y - centerY;
+                    const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+                    // in→out: phase increases with distance (rings expand from center)
+                    // out→in: phase decreases with distance (rings contract toward center)
+                    const sign = waveShape === 'concentric-in' ? -1 : 1;
+                    wavePhase = sign * distanceFromCenter * waveFrequency + time * waveSpeed;
+                } else {
+                    // Project hex position onto wave direction axis
+                    const waveAxisX = Math.cos(waveDirectionRad);
+                    const waveAxisY = Math.sin(waveDirectionRad);
+                    const distanceAlongWave = x * waveAxisX + y * waveAxisY;
+                    wavePhase = distanceAlongWave * waveFrequency + time * waveSpeed;
+                }
                 
                 // Calculate wave offset based on shape
                 let waveOffset;
                 if (waveShape === 'flat') {
                     // Triangle/sawtooth wave for flat shape
-                    // Use modulo to create repeating pattern, then scale to -1 to 1
                     const normalized = (wavePhase % (2 * Math.PI)) / (2 * Math.PI);
                     waveOffset = normalized < 0.5 
                         ? 4 * normalized - 1  // Rising edge: -1 to 1
                         : 3 - 4 * normalized; // Falling edge: 1 to -1
                 } else {
-                    // Curved shape using sine wave
+                    // Curved or concentric in/out: sine wave
                     waveOffset = Math.sin(wavePhase);
                 }
                 
@@ -1084,6 +1204,11 @@ function processImage(time = 0) {
     }
     
     captureHexagons = false;
+    
+    // Update embed size hint for images (not video)
+    if (inputImage && !inputVideo && embedSizeHint && embedSizeHint.style.display !== 'none') {
+        updateEmbedSizeHint();
+    }
 }
 
 function sampleHexagonBrightness(imageData, centerX, centerY, maxSize, imgWidth, imgHeight) {

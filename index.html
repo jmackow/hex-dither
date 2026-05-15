@@ -22,7 +22,23 @@
             <button type="button" class="btn-link" id="playPauseBtn" disabled style="display: none;">Pause</button>
             <button type="button" class="btn-link" id="downloadBtn" disabled>Download Image</button>
             <button type="button" class="btn-link" id="downloadAnimatedBtn" disabled style="display: none;">Download Animated</button>
+            <div class="embed-ratio-wrap" id="embedRatioWrap" style="display: none;">
+                <label for="embedAspectRatio">Embed ratio</label>
+                <select id="embedAspectRatio">
+                    <option value="image" selected>Image</option>
+                    <option value="16:9">16:9</option>
+                    <option value="4:3">4:3</option>
+                    <option value="1:1">1:1</option>
+                    <option value="3:4">3:4</option>
+                    <option value="9:16">9:16</option>
+                </select>
+            </div>
+            <div class="embed-id-wrap" id="embedIdWrap" style="display: none;">
+                <label for="embedId">Embed ID</label>
+                <input type="text" id="embedId" value="hexCanvas" placeholder="hexCanvas">
+            </div>
             <button type="button" class="btn-link" id="downloadEmbedBtn" disabled style="display: none;">Export Embed</button>
+            <span id="embedSizeHint" class="embed-size-hint" style="display: none;"></span>
         </div>
     </header>
     <div class="main-container">
@@ -41,19 +57,31 @@
                 </div>
                 <h2 class="section-title">HEXAGON PARAMETERS</h2>
                 <div class="slider-group">
+                    <div class="slider-ticks" aria-hidden="true"></div>
+                    <div class="slider-fill"></div>
                     <label for="hexSize">Max Size</label>
-                    <input type="range" id="hexSize" min="1" max="50" value="20">
-                    <span id="hexSizeValue" class="slider-value">20</span>
+                    <div class="slider-track-wrap">
+                        <input type="range" id="hexSize" min="1" max="50" value="8">
+                    </div>
+                    <span id="hexSizeValue" class="slider-value">8</span>
                 </div>
                 <div class="slider-group">
+                    <div class="slider-ticks" aria-hidden="true"></div>
+                    <div class="slider-fill"></div>
                     <label for="minHexSize">Min Size</label>
-                    <input type="range" id="minHexSize" min="1" max="10" value="2">
+                    <div class="slider-track-wrap">
+                        <input type="range" id="minHexSize" min="1" max="10" value="2">
+                    </div>
                     <span id="minHexSizeValue" class="slider-value">2</span>
                 </div>
                 <h2 class="section-title">INTERACTIVE</h2>
                 <div class="slider-group">
+                    <div class="slider-ticks" aria-hidden="true"></div>
+                    <div class="slider-fill"></div>
                     <label for="jitterSpeed">Jitter Speed</label>
-                    <input type="range" id="jitterSpeed" min="0" max="3" step="0.1" value="1.0">
+                    <div class="slider-track-wrap">
+                        <input type="range" id="jitterSpeed" min="0" max="3" step="0.1" value="1.0">
+                    </div>
                     <span id="jitterSpeedValue" class="slider-value">1.0</span>
                 </div>
                 <div class="toggle-group">
@@ -63,8 +91,12 @@
                     </label>
                 </div>
                 <div class="slider-group">
+                    <div class="slider-ticks" aria-hidden="true"></div>
+                    <div class="slider-fill"></div>
                     <label for="interactiveRadius">Radius</label>
-                    <input type="range" id="interactiveRadius" min="20" max="600" value="250">
+                    <div class="slider-track-wrap">
+                        <input type="range" id="interactiveRadius" min="20" max="600" value="250">
+                    </div>
                     <span id="interactiveRadiusValue" class="slider-value">250</span>
                 </div>
                 <h2 class="section-title">WAVE ANIMATION</h2>
@@ -76,18 +108,30 @@
                 </div>
                 <div class="wave-controls" id="waveControls" style="display: none;">
                     <div class="slider-group">
+                        <div class="slider-ticks" aria-hidden="true"></div>
+                        <div class="slider-fill"></div>
                         <label for="waveSpeed">Speed</label>
-                        <input type="range" id="waveSpeed" min="0" max="10" step="0.1" value="2.0">
+                        <div class="slider-track-wrap">
+                            <input type="range" id="waveSpeed" min="0" max="10" step="0.1" value="2.0">
+                        </div>
                         <span id="waveSpeedValue" class="slider-value">2.0</span>
                     </div>
                     <div class="slider-group">
+                        <div class="slider-ticks" aria-hidden="true"></div>
+                        <div class="slider-fill"></div>
                         <label for="waveSize">Size</label>
-                        <input type="range" id="waveSize" min="0" max="1" step="0.05" value="0.5">
+                        <div class="slider-track-wrap">
+                            <input type="range" id="waveSize" min="0" max="1" step="0.05" value="0.5">
+                        </div>
                         <span id="waveSizeValue" class="slider-value">0.5</span>
                     </div>
                     <div class="slider-group">
+                        <div class="slider-ticks" aria-hidden="true"></div>
+                        <div class="slider-fill"></div>
                         <label for="waveDirection">Direction</label>
-                        <input type="range" id="waveDirection" min="0" max="345" step="15" value="90">
+                        <div class="slider-track-wrap">
+                            <input type="range" id="waveDirection" min="0" max="345" step="15" value="90">
+                        </div>
                         <span id="waveDirectionValue" class="slider-value">90°</span>
                     </div>
                     <div class="select-group">
@@ -95,6 +139,8 @@
                         <select id="waveShape">
                             <option value="curved" selected>Curved</option>
                             <option value="flat">Flat</option>
+                            <option value="concentric-out">Concentric in→out</option>
+                            <option value="concentric-in">Concentric out→in</option>
                         </select>
                     </div>
                 </div>
@@ -102,11 +148,11 @@
                 <div class="color-controls">
                     <div class="color-picker-group">
                         <label for="fgColor">Hexagon</label>
-                        <input type="color" id="fgColor" value="#000000">
+                        <input type="color" id="fgColor" value="#66B5FF">
                     </div>
                     <div class="color-picker-group">
                         <label for="bgColor">Background</label>
-                        <input type="color" id="bgColor" value="#FFFFFF">
+                        <input type="color" id="bgColor" value="#2495FF">
                     </div>
                 </div>
                 <div class="swatch-controls">
@@ -122,6 +168,8 @@
                             <button class="color-swatch" data-role="fg-swatch" data-color="#90DC5B" style="background-color:#90DC5B;"></button>
                             <button class="color-swatch" data-role="fg-swatch" data-color="#BC97FF" style="background-color:#BC97FF;"></button>
                             <button class="color-swatch" data-role="fg-swatch" data-color="#9A73E0" style="background-color:#9A73E0;"></button>
+                            <button class="color-swatch" data-role="fg-swatch" data-color="#E76137" style="background-color:#E76137;"></button>
+                            <button class="color-swatch" data-role="fg-swatch" data-color="#EF8463" style="background-color:#EF8463;"></button>
                         </div>
                     </div>
                     <div class="swatch-group">
@@ -136,6 +184,8 @@
                             <button class="color-swatch" data-role="bg-swatch" data-color="#90DC5B" style="background-color:#90DC5B;"></button>
                             <button class="color-swatch" data-role="bg-swatch" data-color="#BC97FF" style="background-color:#BC97FF;"></button>
                             <button class="color-swatch" data-role="bg-swatch" data-color="#9A73E0" style="background-color:#9A73E0;"></button>
+                            <button class="color-swatch" data-role="bg-swatch" data-color="#E76137" style="background-color:#E76137;"></button>
+                            <button class="color-swatch" data-role="bg-swatch" data-color="#EF8463" style="background-color:#EF8463;"></button>
                         </div>
                     </div>
                 </div>
